@@ -289,6 +289,19 @@ export default function CreateVaultPage() {
           </div>
         )}
       </section>
+
+      <section className="card grid">
+        <h3 style={{ margin: 0 }}>Setup Tips</h3>
+        <p style={{ color: "var(--muted)", margin: 0 }}>
+          Use short timer values on devnet for testing and longer values for real usage.
+        </p>
+        <p style={{ color: "var(--muted)", margin: 0 }}>
+          Beneficiary shares must total 100 and wallet addresses must be unique.
+        </p>
+        <p style={{ color: "var(--muted)", margin: 0 }}>
+          After creating a vault, link Telegram to receive warning/challenge/claimable alerts.
+        </p>
+      </section>
     </main>
   );
 }
