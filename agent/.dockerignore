@@ -1,0 +1,8 @@
+node_modules
+dist
+tests
+.env
+.env.*
+agent-keypair.json
+*.log
+npm-debug.log*

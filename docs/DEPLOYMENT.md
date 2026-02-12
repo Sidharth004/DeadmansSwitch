@@ -12,22 +12,47 @@ After deploy:
 - Regenerate/copy IDL to `agent/src/idl/` and `frontend/idl/`
 - Update env vars for frontend and agent
 
-## Agent Deployment
+## Agent Deployment (Koyeb)
 
-Target: Railway/Fly.io/VM with Node.js runtime.
+Preferred hackathon path: deploy `agent/` as a Koyeb service without card details.
 
-1. Set env vars from `agent/.env.example`
-2. Ensure wallet keypair is mounted securely (not committed)
-3. Start command:
+### Option A: Dockerfile deploy (recommended)
+
+1. Push branch containing `agent/Dockerfile`
+2. In Koyeb, create a new service from GitHub repo
+3. Set service root directory to `agent`
+4. Build mode: Dockerfile (auto-detected)
+5. Service type: Worker (no public HTTP route needed)
+6. Add environment variables from `agent/.env.example`:
+- `SOLANA_RPC_URL`
+- `PROGRAM_ID`
+- `AGENT_PRIVATE_KEY` (base58 private key)
+- `TELEGRAM_BOT_TOKEN`
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- optional mail + tuning vars
+
+7. Deploy and verify logs show:
+- monitor polling loop started
+- activity checker loop started
+- telegram bot launch without auth errors
+
+### Option B: Build/Run commands (no Dockerfile)
+
+- Root directory: `agent`
+- Build command: `npm ci && npm run build`
+- Run command: `npm run start`
+
+### AGENT_PRIVATE_KEY formatting
+
+`AGENT_PRIVATE_KEY` must be base58-encoded secret key bytes.
+
+If you only have `agent/agent-keypair.json`, convert locally:
 
 ```bash
-npm run dev
+cd agent
+node -e "const fs=require('fs');const bs58=require('bs58');const k=JSON.parse(fs.readFileSync('agent-keypair.json','utf8'));console.log(bs58.encode(Uint8Array.from(k)));"
 ```
-
-4. Health checks:
-- logs show monitor polling loop
-- telegram bot responds to `/help`
-- DB writes succeed
 
 ## Frontend Deployment (Vercel)
 
