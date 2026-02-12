@@ -43,6 +43,42 @@ Preferred hackathon path: deploy `agent/` as a Koyeb service without card detail
 - Build command: `npm ci && npm run build`
 - Run command: `npm run start`
 
+## Agent Deployment (GitHub Actions Cron Alternative)
+
+Use this when you want a no-card scheduled worker instead of an always-on host.
+
+Workflow file:
+- `.github/workflows/agent-cron.yml`
+
+Behavior:
+- Runs every 10 minutes
+- Starts the agent for up to 8 minutes
+- Uses workflow concurrency to prevent overlap
+- Supports manual runs via `workflow_dispatch`
+
+### Required GitHub Repository Secrets
+
+- `SOLANA_RPC_URL`
+- `PROGRAM_ID`
+- `AGENT_PRIVATE_KEY`
+- `TELEGRAM_BOT_TOKEN`
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `APP_URL`
+
+Optional (email):
+- `EMAIL_HOST`
+- `EMAIL_PORT`
+- `EMAIL_USER`
+- `EMAIL_PASS`
+- `EMAIL_FROM`
+
+### Important caveats
+
+- GitHub scheduled workflows are best-effort and not true always-on infrastructure.
+- There can be schedule delays, so monitoring cadence is approximate.
+- Keep polling intervals aligned to the short runtime window.
+
 ### AGENT_PRIVATE_KEY formatting
 
 `AGENT_PRIVATE_KEY` must be base58-encoded secret key bytes.
