@@ -9,6 +9,7 @@ export interface VaultStore {
     vault: Omit<VaultRecord, "id" | "created_at" | "updated_at">
   ): Promise<VaultRecord>;
   updateVaultState(ownerAddress: string, state: string): Promise<void>;
+  markActivityReminderSent(ownerAddress: string, sentAtIso: string): Promise<void>;
   linkTelegram(ownerAddress: string, chatId: string): Promise<void>;
   getVaultsByChatId(chatId: string): Promise<VaultRecord[]>;
 }
@@ -79,6 +80,21 @@ export class SupabaseVaultStore implements VaultStore {
     this.logger.info({ ownerAddress, chatId }, "Telegram linked to vault");
   }
 
+  async markActivityReminderSent(
+    ownerAddress: string,
+    sentAtIso: string
+  ): Promise<void> {
+    const { error } = await this.supabase
+      .from("vaults")
+      .update({
+        last_activity_reminder_at: sentAtIso,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("owner_address", ownerAddress);
+
+    if (error) throw error;
+  }
+
   async getVaultsByChatId(chatId: string): Promise<VaultRecord[]> {
     const { data, error } = await this.supabase
       .from("vaults")
@@ -131,6 +147,17 @@ export class InMemoryVaultStore implements VaultStore {
     const record = this.vaults.get(ownerAddress);
     if (record) {
       record.telegram_chat_id = chatId;
+      record.updated_at = new Date().toISOString();
+    }
+  }
+
+  async markActivityReminderSent(
+    ownerAddress: string,
+    sentAtIso: string
+  ): Promise<void> {
+    const record = this.vaults.get(ownerAddress);
+    if (record) {
+      record.last_activity_reminder_at = sentAtIso;
       record.updated_at = new Date().toISOString();
     }
   }

@@ -7,6 +7,7 @@ export interface VaultRecord {
   challenge_period_days: number | null;
   telegram_chat_id: string | null;
   owner_email: string | null;
+  last_activity_reminder_at: string | null;
   created_at: string;
   updated_at: string;
 }

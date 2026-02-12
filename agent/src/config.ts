@@ -28,6 +28,7 @@ const configSchema = z.object({
   logLevel: z.enum(["trace", "debug", "info", "warn", "error"]).default("info"),
   pollIntervalMs: z.coerce.number().positive().default(300_000),
   activityCheckIntervalMs: z.coerce.number().positive().default(600_000),
+  activityReminderCooldownSeconds: z.coerce.number().positive().default(21_600),
 });
 
 export type Config = z.infer<typeof configSchema>;
@@ -49,5 +50,7 @@ export function loadConfig(): Config {
     logLevel: process.env.LOG_LEVEL,
     pollIntervalMs: process.env.POLL_INTERVAL_MS,
     activityCheckIntervalMs: process.env.ACTIVITY_CHECK_INTERVAL_MS,
+    activityReminderCooldownSeconds:
+      process.env.ACTIVITY_REMINDER_COOLDOWN_SECONDS,
   });
 }

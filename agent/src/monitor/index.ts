@@ -174,6 +174,15 @@ export class VaultMonitor {
               vaultRecord.telegram_chat_id
             ) {
               try {
+                if (!this.shouldSendActivityReminder(vaultRecord.last_activity_reminder_at)) {
+                  this.logger.debug(
+                    { owner: vaultRecord.owner_address },
+                    "Skipping activity reminder due to cooldown"
+                  );
+                  continue;
+                }
+
+                const sentAtIso = new Date().toISOString();
                 await this.bot.telegram.sendMessage(
                   vaultRecord.telegram_chat_id,
                   [
@@ -181,6 +190,10 @@ export class VaultMonitor {
                     "Your vault is still not active on-chain.",
                     `Please check in now: ${this.config.appUrl}`,
                   ].join("\n")
+                );
+                await this.store.markActivityReminderSent(
+                  vaultRecord.owner_address,
+                  sentAtIso
                 );
               } catch (err) {
                 this.logger.error(
@@ -200,5 +213,18 @@ export class VaultMonitor {
     } catch (err) {
       this.logger.error({ err }, "Error in activity check loop");
     }
+  }
+
+  private shouldSendActivityReminder(
+    lastReminderAt: string | null | undefined
+  ): boolean {
+    if (!lastReminderAt) return true;
+
+    const lastReminderUnix = Date.parse(lastReminderAt);
+    if (Number.isNaN(lastReminderUnix)) return true;
+
+    const cooldownMs = this.config.activityReminderCooldownSeconds * 1000;
+    const elapsedMs = Date.now() - lastReminderUnix;
+    return elapsedMs >= cooldownMs;
   }
 }

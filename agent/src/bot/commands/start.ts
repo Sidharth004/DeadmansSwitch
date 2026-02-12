@@ -69,6 +69,7 @@ export function setupStartCommand(
         challenge_period_days: Math.floor(onChainVault.challengePeriodSeconds / 86400),
         telegram_chat_id: chatId,
         owner_email: null,
+        last_activity_reminder_at: null,
       });
 
       logger.info({ ownerAddress, chatId }, "Vault linked via /start");
