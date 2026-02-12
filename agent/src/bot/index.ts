@@ -1,0 +1,37 @@
+import { Telegraf, Context } from "telegraf";
+import { Config } from "../config";
+import { Logger } from "../logger";
+import { VaultStore } from "../database/vault-store";
+import { SolanaContext } from "../solana/connection";
+import { setupStartCommand } from "./commands/start";
+import { setupHelpCommand } from "./commands/help";
+import { setupStatusCommand } from "./commands/status";
+import { setupCheckinCommand } from "./commands/checkin";
+
+export function createBot(
+  config: Config,
+  logger: Logger,
+  store: VaultStore,
+  solana: SolanaContext
+): Telegraf {
+  const bot = new Telegraf(config.telegramBotToken);
+
+  bot.use((ctx, next) => {
+    logger.debug(
+      { from: ctx.from?.id, text: (ctx.message as any)?.text },
+      "Incoming message"
+    );
+    return next();
+  });
+
+  setupStartCommand(bot, store, solana, config, logger);
+  setupHelpCommand(bot);
+  setupStatusCommand(bot, store, solana, logger);
+  setupCheckinCommand(bot, config);
+
+  bot.catch((err: any, ctx: Context) => {
+    logger.error({ err, updateType: ctx.updateType }, "Bot error");
+  });
+
+  return bot;
+}

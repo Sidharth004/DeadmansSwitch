@@ -5,3 +5,6 @@ target
 node_modules
 test-ledger
 .yarn
+agent/.env
+agent/dist
+agent/agent-keypair.json
