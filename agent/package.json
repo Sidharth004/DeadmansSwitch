@@ -8,6 +8,7 @@
     "dev": "tsc && node dist/main.js",
     "start": "node dist/main.js",
     "test": "vitest run",
+    "e2e:devnet": "tsc && node dist/scripts/e2e-devnet.js",
     "postinstall": "cd node_modules/@3land/listings-sdk/node_modules && rm -rf node-fetch && npm install node-fetch@2.7.0 --no-save 2>/dev/null || true"
   },
   "dependencies": {
