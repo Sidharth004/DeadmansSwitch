@@ -35,15 +35,11 @@ export async function sendEmail(
     return;
   }
 
-  try {
-    await transporter.sendMail({
-      from: config.emailFrom || config.emailUser,
-      to,
-      subject,
-      text: body,
-    });
-    logger.debug({ to, subject }, "Email sent");
-  } catch (err) {
-    logger.error({ err, to }, "Failed to send email");
-  }
+  await transporter.sendMail({
+    from: config.emailFrom || config.emailUser,
+    to,
+    subject,
+    text: body,
+  });
+  logger.debug({ to, subject }, "Email sent");
 }

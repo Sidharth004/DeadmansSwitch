@@ -7,12 +7,8 @@ export async function sendTelegramMessage(
   message: string,
   logger: Logger
 ): Promise<void> {
-  try {
-    await bot.telegram.sendMessage(chatId, message, {
-      parse_mode: "Markdown",
-    });
-    logger.debug({ chatId }, "Telegram message sent");
-  } catch (err) {
-    logger.error({ err, chatId }, "Failed to send Telegram message");
-  }
+  await bot.telegram.sendMessage(chatId, message, {
+    parse_mode: "Markdown",
+  });
+  logger.debug({ chatId }, "Telegram message sent");
 }

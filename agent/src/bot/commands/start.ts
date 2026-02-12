@@ -3,14 +3,12 @@ import { PublicKey } from "@solana/web3.js";
 import { VaultStore } from "../../database/vault-store";
 import { SolanaContext } from "../../solana/connection";
 import { fetchVaultState } from "../../solana/vault-reader";
-import { Config } from "../../config";
 import { Logger } from "../../logger";
 
 export function setupStartCommand(
   bot: Telegraf,
   store: VaultStore,
   solana: SolanaContext,
-  config: Config,
   logger: Logger
 ): void {
   bot.start(async (ctx) => {

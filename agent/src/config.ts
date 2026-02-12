@@ -29,6 +29,12 @@ const configSchema = z.object({
   pollIntervalMs: z.coerce.number().positive().default(300_000),
   activityCheckIntervalMs: z.coerce.number().positive().default(600_000),
   activityReminderCooldownSeconds: z.coerce.number().positive().default(21_600),
+  advanceStateRetryAttempts: z.coerce.number().int().positive().default(3),
+  advanceStateRetryBaseDelayMs: z.coerce.number().int().positive().default(1500),
+  notificationRetryAttempts: z.coerce.number().int().positive().default(3),
+  notificationRetryBaseDelayMs: z.coerce.number().int().positive().default(1000),
+  botRateLimitWindowMs: z.coerce.number().int().positive().default(30_000),
+  botRateLimitMaxCommands: z.coerce.number().int().positive().default(6),
 });
 
 export type Config = z.infer<typeof configSchema>;
@@ -52,5 +58,11 @@ export function loadConfig(): Config {
     activityCheckIntervalMs: process.env.ACTIVITY_CHECK_INTERVAL_MS,
     activityReminderCooldownSeconds:
       process.env.ACTIVITY_REMINDER_COOLDOWN_SECONDS,
+    advanceStateRetryAttempts: process.env.ADVANCE_STATE_RETRY_ATTEMPTS,
+    advanceStateRetryBaseDelayMs: process.env.ADVANCE_STATE_RETRY_BASE_DELAY_MS,
+    notificationRetryAttempts: process.env.NOTIFICATION_RETRY_ATTEMPTS,
+    notificationRetryBaseDelayMs: process.env.NOTIFICATION_RETRY_BASE_DELAY_MS,
+    botRateLimitWindowMs: process.env.BOT_RATE_LIMIT_WINDOW_MS,
+    botRateLimitMaxCommands: process.env.BOT_RATE_LIMIT_MAX_COMMANDS,
   });
 }

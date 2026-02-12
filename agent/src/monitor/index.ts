@@ -9,6 +9,7 @@ import { VaultStore } from "../database/vault-store";
 import { notifyStateTransition } from "../notifications";
 import { Config } from "../config";
 import { Logger } from "../logger";
+import { withRetry } from "../utils/retry";
 
 export class VaultMonitor {
   private stateTimer: ReturnType<typeof setInterval> | null = null;
@@ -111,16 +112,30 @@ export class VaultMonitor {
       );
 
       try {
-        const tx = await sendAdvanceState(
-          this.solana.program,
-          ownerPubkey,
-          this.logger
+        await withRetry(
+          () =>
+            sendAdvanceState(
+              this.solana.program,
+              ownerPubkey,
+              this.logger
+            ),
+          {
+            attempts: this.config.advanceStateRetryAttempts,
+            baseDelayMs: this.config.advanceStateRetryBaseDelayMs,
+            operationName: "advance_state",
+            logger: this.logger,
+          }
         );
 
         // Re-fetch to get new state
-        const updated = await fetchVaultState(
-          this.solana.program,
-          ownerPubkey
+        const updated = await withRetry(
+          () => fetchVaultState(this.solana.program, ownerPubkey),
+          {
+            attempts: this.config.advanceStateRetryAttempts,
+            baseDelayMs: this.config.advanceStateRetryBaseDelayMs,
+            operationName: "fetch_updated_vault_state",
+            logger: this.logger,
+          }
         );
         if (updated && vaultRecord) {
           await this.store.updateVaultState(ownerAddress, updated.state);
