@@ -13,19 +13,37 @@ export default function VaultDashboardPage() {
   const { connection } = useConnection();
   const { publicKey, signTransaction, signAllTransactions } = useWallet();
   const [vault, setVault] = useState<VaultWithBeneficiaries | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [checkinLoading, setCheckinLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const canCheckIn = useMemo(
     () => !!vault && !!publicKey && publicKey.toBase58() === vault.owner_address,
     [vault, publicKey]
   );
 
-  useEffect(() => {
+  async function loadVault() {
     if (!params.id) return;
-    fetch(`/api/vaults/${params.id}`)
-      .then((res) => res.json())
-      .then((data) => setVault(data))
-      .catch(() => setMessage("Failed to load vault."));
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/vaults/${params.id}`);
+      if (!response.ok) {
+        const failure = await response.json().catch(() => ({ error: "Failed to load vault." }));
+        throw new Error(failure.error || "Failed to load vault.");
+      }
+      const data = await response.json();
+      setVault(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load vault.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadVault();
   }, [params.id]);
 
   async function onCheckIn() {
@@ -34,6 +52,9 @@ export default function VaultDashboardPage() {
       return;
     }
 
+    setCheckinLoading(true);
+    setMessage(null);
+    setError(null);
     try {
       const walletForAnchor = {
         publicKey,
@@ -48,16 +69,27 @@ export default function VaultDashboardPage() {
           owner: publicKey,
         })
         .rpc();
+      await loadVault();
       setMessage("Check-in successful. Timer reset.");
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Check-in failed");
+      setError(e instanceof Error ? e.message : "Check-in failed");
+    } finally {
+      setCheckinLoading(false);
     }
+  }
+
+  if (loading) {
+    return (
+      <main className="shell card">
+        <p>Loading vault...</p>
+      </main>
+    );
   }
 
   if (!vault) {
     return (
       <main className="shell card">
-        <p>Loading vault...</p>
+        <p style={{ color: "#fca5a5" }}>{error || "Vault not found."}</p>
       </main>
     );
   }
@@ -75,13 +107,17 @@ export default function VaultDashboardPage() {
         <p style={{ color: "var(--muted)", margin: 0 }}>
           Warning: {vault.warning_period_days ?? "n/a"} days | Challenge: {vault.challenge_period_days ?? "n/a"} days
         </p>
-        <button className="button" disabled={!canCheckIn} onClick={onCheckIn}>
-          Check In
+        <button className="button" disabled={!canCheckIn || checkinLoading} onClick={onCheckIn}>
+          {checkinLoading ? "Checking In..." : "Check In"}
         </button>
         {!canCheckIn && (
           <small style={{ color: "var(--muted)" }}>Only the owner wallet can check in.</small>
         )}
+        {error && <p style={{ color: "#fca5a5" }}>{error}</p>}
         {message && <p style={{ color: "#86efac" }}>{message}</p>}
+        <button className="button" type="button" onClick={loadVault} disabled={loading || checkinLoading}>
+          Refresh Vault
+        </button>
       </section>
 
       <section className="card grid">

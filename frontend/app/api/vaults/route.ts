@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { BeneficiaryInput } from "@/lib/types";
+import { PublicKey } from "@solana/web3.js";
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function GET(request: NextRequest) {
   const owner = request.nextUrl.searchParams.get("owner");
@@ -39,6 +42,59 @@ export async function POST(request: NextRequest) {
     if (!ownerAddress || !vaultPda || !Array.isArray(beneficiaries)) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
+    if (beneficiaries.length === 0 || beneficiaries.length > 5) {
+      return NextResponse.json({ error: "Beneficiary count must be between 1 and 5." }, { status: 400 });
+    }
+    if (!Number.isInteger(warningPeriodDays) || warningPeriodDays < 1) {
+      return NextResponse.json({ error: "warningPeriodDays must be a positive integer." }, { status: 400 });
+    }
+    if (!Number.isInteger(challengePeriodDays) || challengePeriodDays < 1) {
+      return NextResponse.json({ error: "challengePeriodDays must be a positive integer." }, { status: 400 });
+    }
+
+    try {
+      new PublicKey(ownerAddress);
+      new PublicKey(vaultPda);
+    } catch {
+      return NextResponse.json({ error: "ownerAddress or vaultPda is invalid." }, { status: 400 });
+    }
+
+    if (ownerEmail && !EMAIL_REGEX.test(ownerEmail)) {
+      return NextResponse.json({ error: "ownerEmail is invalid." }, { status: 400 });
+    }
+
+    const totalShares = beneficiaries.reduce((sum, item) => sum + item.share, 0);
+    if (totalShares !== 100) {
+      return NextResponse.json({ error: "Beneficiary shares must total 100." }, { status: 400 });
+    }
+
+    const normalizedAddresses = beneficiaries.map((b) => b.address.trim());
+    if (new Set(normalizedAddresses).size !== normalizedAddresses.length) {
+      return NextResponse.json({ error: "Beneficiary wallet addresses must be unique." }, { status: 400 });
+    }
+
+    for (const [index, beneficiary] of beneficiaries.entries()) {
+      if (!Number.isInteger(beneficiary.share) || beneficiary.share < 1 || beneficiary.share > 100) {
+        return NextResponse.json(
+          { error: `Beneficiary #${index + 1} share must be an integer between 1 and 100.` },
+          { status: 400 }
+        );
+      }
+      try {
+        new PublicKey(beneficiary.address.trim());
+      } catch {
+        return NextResponse.json(
+          { error: `Beneficiary #${index + 1} address is invalid.` },
+          { status: 400 }
+        );
+      }
+      if (beneficiary.email && !EMAIL_REGEX.test(beneficiary.email)) {
+        return NextResponse.json(
+          { error: `Beneficiary #${index + 1} email is invalid.` },
+          { status: 400 }
+        );
+      }
+    }
 
     const supabase = createSupabaseServerClient();
 
@@ -71,7 +127,7 @@ export async function POST(request: NextRequest) {
     if (beneficiaries.length > 0) {
       const insertRows = beneficiaries.map((b) => ({
         vault_id: vault.id,
-        address: b.address,
+        address: b.address.trim(),
         share: b.share,
         email: b.email || null,
         has_claimed: false,

@@ -13,14 +13,32 @@ export default function ClaimPage() {
   const { connection } = useConnection();
   const { publicKey, signTransaction, signAllTransactions } = useWallet();
   const [vault, setVault] = useState<VaultWithBeneficiaries | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [claiming, setClaiming] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function loadVault() {
+    if (!params.id) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/vaults/${params.id}`);
+      if (!response.ok) {
+        const failure = await response.json().catch(() => ({ error: "Failed to load vault." }));
+        throw new Error(failure.error || "Failed to load vault.");
+      }
+      const data = await response.json();
+      setVault(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load vault.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    if (!params.id) return;
-    fetch(`/api/vaults/${params.id}`)
-      .then((res) => res.json())
-      .then((data) => setVault(data))
-      .catch(() => setMessage("Failed to load vault."));
+    loadVault();
   }, [params.id]);
 
   const beneficiary = useMemo(() => {
@@ -34,6 +52,9 @@ export default function ClaimPage() {
       return;
     }
 
+    setClaiming(true);
+    setMessage(null);
+    setError(null);
     try {
       const walletForAnchor = {
         publicKey,
@@ -48,16 +69,27 @@ export default function ClaimPage() {
           beneficiary: publicKey,
         })
         .rpc();
-      setMessage("Claim transaction submitted.");
+      await loadVault();
+      setMessage("Claim transaction confirmed.");
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Claim failed");
+      setError(e instanceof Error ? e.message : "Claim failed");
+    } finally {
+      setClaiming(false);
     }
+  }
+
+  if (loading) {
+    return (
+      <main className="shell card">
+        <p>Loading vault...</p>
+      </main>
+    );
   }
 
   if (!vault) {
     return (
       <main className="shell card">
-        <p>Loading vault...</p>
+        <p style={{ color: "#fca5a5" }}>{error || "Vault not found."}</p>
       </main>
     );
   }
@@ -75,8 +107,8 @@ export default function ClaimPage() {
         {beneficiary ? (
           <>
             <p style={{ margin: 0 }}>Your share: {beneficiary.share}%</p>
-            <button className="button" disabled={!canClaim} onClick={onClaim}>
-              Claim Assets
+            <button className="button" disabled={!canClaim || claiming} onClick={onClaim}>
+              {claiming ? "Claiming..." : "Claim Assets"}
             </button>
           </>
         ) : (
@@ -85,7 +117,11 @@ export default function ClaimPage() {
         {vault.state !== "claimable" && (
           <small style={{ color: "var(--muted)" }}>Assets become claimable only in CLAIMABLE state.</small>
         )}
+        {error && <p style={{ color: "#fca5a5" }}>{error}</p>}
         {message && <p style={{ color: "#86efac" }}>{message}</p>}
+        <button className="button" type="button" onClick={loadVault} disabled={loading || claiming}>
+          Refresh Vault
+        </button>
       </section>
     </main>
   );

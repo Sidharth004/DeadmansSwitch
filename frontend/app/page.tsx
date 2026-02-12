@@ -16,6 +16,9 @@ export default function HomePage() {
           <Link className="button" style={{ maxWidth: 220, textAlign: "center" }} href="/create">
             Create Vault
           </Link>
+          <Link className="button" style={{ maxWidth: 220, textAlign: "center" }} href="/vault">
+            My Vaults
+          </Link>
           <WalletMultiButton />
         </div>
       </section>
