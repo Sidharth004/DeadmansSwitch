@@ -1,7 +1,8 @@
 import { Telegraf } from "telegraf";
 import { PublicKey } from "@solana/web3.js";
 import { VaultStore } from "../../database/vault-store";
-import { SolanaContext, getVaultPda } from "../../solana/connection";
+import { SolanaContext } from "../../solana/connection";
+import { fetchVaultState } from "../../solana/vault-reader";
 import { Config } from "../../config";
 import { Logger } from "../../logger";
 
@@ -44,21 +45,28 @@ export function setupStartCommand(
       return;
     }
 
-    const [vaultPda] = getVaultPda(
-      ownerPubkey,
-      new PublicKey(config.programId)
-    );
-
     const chatId = String(ctx.chat.id);
 
     try {
+      const onChainVault = await fetchVaultState(solana.program, ownerPubkey);
+      if (!onChainVault) {
+        await ctx.reply(
+          [
+            "Vault not found on-chain for this owner address.",
+            "Create your vault first, then run `/start <owner_pubkey>` again.",
+          ].join("\n"),
+          { parse_mode: "Markdown" }
+        );
+        return;
+      }
+
       // Upsert vault record and link telegram
       await store.upsertVault({
         owner_address: ownerAddress,
-        vault_pda: vaultPda.toBase58(),
-        state: "active",
-        warning_period_days: null,
-        challenge_period_days: null,
+        vault_pda: onChainVault.pda.toBase58(),
+        state: onChainVault.state,
+        warning_period_days: Math.floor(onChainVault.warningPeriodSeconds / 86400),
+        challenge_period_days: Math.floor(onChainVault.challengePeriodSeconds / 86400),
         telegram_chat_id: chatId,
         owner_email: null,
       });
@@ -70,7 +78,7 @@ export function setupStartCommand(
           `✅ Vault linked successfully!`,
           ``,
           `Owner: \`${ownerAddress}\``,
-          `Vault PDA: \`${vaultPda.toBase58()}\``,
+          `Vault PDA: \`${onChainVault.pda.toBase58()}\``,
           ``,
           `I'll monitor this vault and notify you of state changes.`,
           `Use /status to check current state.`,

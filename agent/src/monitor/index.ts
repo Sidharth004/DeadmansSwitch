@@ -148,7 +148,8 @@ export class VaultMonitor {
       for (const vaultRecord of vaults) {
         if (
           vaultRecord.state !== "active" &&
-          vaultRecord.state !== "warning"
+          vaultRecord.state !== "warning" &&
+          vaultRecord.state !== "challenge"
         ) {
           continue;
         }
@@ -167,6 +168,27 @@ export class VaultMonitor {
               { owner: vaultRecord.owner_address },
               "Owner wallet activity detected"
             );
+
+            if (
+              (vaultRecord.state === "warning" || vaultRecord.state === "challenge") &&
+              vaultRecord.telegram_chat_id
+            ) {
+              try {
+                await this.bot.telegram.sendMessage(
+                  vaultRecord.telegram_chat_id,
+                  [
+                    "Recent wallet activity detected.",
+                    "Your vault is still not active on-chain.",
+                    `Please check in now: ${this.config.appUrl}`,
+                  ].join("\n")
+                );
+              } catch (err) {
+                this.logger.error(
+                  { err, owner: vaultRecord.owner_address },
+                  "Failed to send activity-based check-in reminder"
+                );
+              }
+            }
           }
         } catch (err) {
           this.logger.error(

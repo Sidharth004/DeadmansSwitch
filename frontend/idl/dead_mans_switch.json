@@ -1,0 +1,514 @@
+{
+  "address": "BbNiY9dgLi93n7a6wYB8EE2NvYwAn4nGdDv22wvEJwsJ",
+  "metadata": {
+    "name": "dead_mans_switch",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "advance_state",
+      "docs": [
+        "Advance the vault state when the relevant timeout has expired.",
+        "Anyone can call this — no signer check required."
+      ],
+      "discriminator": [
+        247,
+        53,
+        149,
+        119,
+        247,
+        58,
+        255,
+        107
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault.owner",
+                "account": "Vault"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "cancel",
+      "docs": [
+        "Owner cancels the vault and withdraws all deposited SOL."
+      ],
+      "discriminator": [
+        232,
+        219,
+        223,
+        41,
+        219,
+        236,
+        220,
+        190
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "vault"
+          ]
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "check_in",
+      "docs": [
+        "Check in to reset the timer. Can be called from any state except Claimed."
+      ],
+      "discriminator": [
+        209,
+        253,
+        4,
+        217,
+        250,
+        241,
+        207,
+        50
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "vault"
+          ]
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "claim",
+      "docs": [
+        "Beneficiary claims their share of the vault."
+      ],
+      "discriminator": [
+        62,
+        198,
+        214,
+        193,
+        213,
+        159,
+        108,
+        210
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "vault.owner",
+                "account": "Vault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "beneficiary",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "deposit_sol",
+      "docs": [
+        "Deposit SOL into the vault."
+      ],
+      "discriminator": [
+        108,
+        81,
+        78,
+        117,
+        125,
+        155,
+        56,
+        200
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "vault"
+          ]
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initialize_vault",
+      "docs": [
+        "Initialize a new vault with beneficiary configuration and timeout periods."
+      ],
+      "discriminator": [
+        48,
+        191,
+        163,
+        44,
+        71,
+        129,
+        63,
+        164
+      ],
+      "accounts": [
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "warning_period_seconds",
+          "type": "i64"
+        },
+        {
+          "name": "challenge_period_seconds",
+          "type": "i64"
+        },
+        {
+          "name": "beneficiaries",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "BeneficiaryConfig"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Vault",
+      "discriminator": [
+        211,
+        8,
+        232,
+        43,
+        2,
+        152,
+        117,
+        119
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidBeneficiaries",
+      "msg": "Invalid beneficiaries configuration"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidShares",
+      "msg": "Beneficiary shares must add up to 100%"
+    },
+    {
+      "code": 6002,
+      "name": "InvalidPeriod",
+      "msg": "Warning and challenge periods must be positive"
+    },
+    {
+      "code": 6003,
+      "name": "InvalidAmount",
+      "msg": "Deposit amount must be greater than zero"
+    },
+    {
+      "code": 6004,
+      "name": "VaultNotActive",
+      "msg": "Vault is not in active state"
+    },
+    {
+      "code": 6005,
+      "name": "VaultClaimed",
+      "msg": "Vault has been claimed"
+    },
+    {
+      "code": 6006,
+      "name": "TimelockNotExpired",
+      "msg": "Timelock has not expired yet"
+    },
+    {
+      "code": 6007,
+      "name": "AlreadyClaimable",
+      "msg": "Vault is already claimable"
+    },
+    {
+      "code": 6008,
+      "name": "NotClaimable",
+      "msg": "Vault is not claimable yet"
+    },
+    {
+      "code": 6009,
+      "name": "NotABeneficiary",
+      "msg": "Not a beneficiary of this vault"
+    },
+    {
+      "code": 6010,
+      "name": "AlreadyClaimed",
+      "msg": "Beneficiary has already claimed"
+    },
+    {
+      "code": 6011,
+      "name": "InvalidState",
+      "msg": "Vault is in an invalid state"
+    },
+    {
+      "code": 6012,
+      "name": "VaultAlreadyClaimable",
+      "msg": "Cannot cancel a claimable vault"
+    }
+  ],
+  "types": [
+    {
+      "name": "BeneficiaryConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "address",
+            "type": "pubkey"
+          },
+          {
+            "name": "share",
+            "type": "u8"
+          },
+          {
+            "name": "has_claimed",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Vault",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "state",
+            "type": {
+              "defined": {
+                "name": "VaultState"
+              }
+            }
+          },
+          {
+            "name": "warning_period_seconds",
+            "type": "i64"
+          },
+          {
+            "name": "challenge_period_seconds",
+            "type": "i64"
+          },
+          {
+            "name": "last_checkin_timestamp",
+            "type": "i64"
+          },
+          {
+            "name": "warning_triggered_at",
+            "type": {
+              "option": "i64"
+            }
+          },
+          {
+            "name": "challenge_triggered_at",
+            "type": {
+              "option": "i64"
+            }
+          },
+          {
+            "name": "sol_balance",
+            "type": "u64"
+          },
+          {
+            "name": "beneficiaries",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "BeneficiaryConfig"
+                }
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "VaultState",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Active"
+          },
+          {
+            "name": "Warning"
+          },
+          {
+            "name": "Challenge"
+          },
+          {
+            "name": "Claimable"
+          },
+          {
+            "name": "Claimed"
+          }
+        ]
+      }
+    }
+  ]
+}

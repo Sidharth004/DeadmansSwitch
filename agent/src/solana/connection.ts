@@ -21,12 +21,25 @@ export function initSolana(config: Config, logger: Logger): SolanaContext {
   const keypair = Keypair.fromSecretKey(bs58.decode(config.agentPrivateKey));
   const wallet = new Wallet(keypair);
   const connection = new Connection(config.solanaRpcUrl, "confirmed");
+  const configuredProgramId = new PublicKey(config.programId);
+  const idlProgramId = new PublicKey((idl as any).address);
+
+  if (!configuredProgramId.equals(idlProgramId)) {
+    logger.warn(
+      {
+        configuredProgramId: configuredProgramId.toBase58(),
+        idlProgramId: idlProgramId.toBase58(),
+      },
+      "PROGRAM_ID differs from IDL address; using configured program ID"
+    );
+  }
 
   const provider = new AnchorProvider(connection, wallet, {
     commitment: "confirmed",
   });
 
-  const program = new Program(idl as any, provider);
+  const programIdl = { ...(idl as any), address: configuredProgramId.toBase58() };
+  const program = new Program(programIdl, provider);
 
   const agentKit = new SolanaAgentKit(
     config.agentPrivateKey,
@@ -35,7 +48,10 @@ export function initSolana(config: Config, logger: Logger): SolanaContext {
   );
 
   logger.info(
-    { agentWallet: keypair.publicKey.toBase58(), programId: config.programId },
+    {
+      agentWallet: keypair.publicKey.toBase58(),
+      programId: program.programId.toBase58(),
+    },
     "Solana context initialized"
   );
 
