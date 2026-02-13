@@ -14,7 +14,8 @@ This file exists to preserve operational context (deployments, runbooks, and cav
 ### Agent (Koyeb, Free plan)
 
 - Service: `deadmansswitch`
-- Health endpoint: `https://<your-koyeb-subdomain>.koyeb.app/health` (returns `ok`)
+- Base URL: `https://nasty-mareah-sidharth-dev-580293c5.koyeb.app`
+- Health endpoint: `https://nasty-mareah-sidharth-dev-580293c5.koyeb.app/health` (returns `ok`)
 
 ## Architecture Reminder
 
@@ -24,6 +25,7 @@ This file exists to preserve operational context (deployments, runbooks, and cav
 
 ## Telegram Bot Commands (Current)
 
+- `/about` (what this bot is + quick start)
 - `/create <owner_pubkey> <warning_days> <challenge_days> <deposit_sol> <beneficiary_pubkey:share[:email]> [...]`
 - `/start <owner_pubkey>` (link existing vault to owner chat)
 - `/beneficiary <owner_pubkey> <beneficiary_pubkey> [email]` (link beneficiary chat for claim alerts)
@@ -71,6 +73,15 @@ Mitigation:
 - GitHub Actions keepalive workflow is available:
   - `.github/workflows/koyeb-keepalive.yml`
   - Requires repo secret: `KOYEB_HEALTH_URL` (full URL to `/health`)
+
+## Recent Operational Fixes
+
+- Koyeb Free compatibility:
+  - Agent exposes `/health` and builds from repo-root Docker context.
+- Telegram stability:
+  - Agent retries bot `launch()` on Telegram polling `409 Conflict` instead of crashing.
+- Bot UX:
+  - Improved `/help` spacing and added `/about`.
 
 ## Supabase Migrations
 
