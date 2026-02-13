@@ -7,6 +7,44 @@ import { createBot } from "./bot";
 import { VaultMonitor } from "./monitor";
 import http from "http";
 
+async function sleep(ms: number): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function launchBotWithRetry(
+  bot: ReturnType<typeof createBot>,
+  logger: ReturnType<typeof createLogger>
+): Promise<void> {
+  // Telegraf polling can hit 409 if another poller is active (or if a previous
+  // instance hasn't released its long-poll yet). Don't crash the whole agent.
+  let attempt = 0;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    attempt += 1;
+    try {
+      await bot.launch();
+      logger.info("Telegram bot launched");
+      return;
+    } catch (err: any) {
+      const msg = String(err?.message || err);
+      const code = err?.response?.error_code;
+      const desc = err?.response?.description;
+
+      const is409 = code === 409 || msg.includes("409") || String(desc || "").includes("409");
+      const delayMs = is409 ? 65_000 : Math.min(120_000, 5_000 * attempt);
+
+      logger.error(
+        { err, attempt, delayMs, code, desc },
+        "Telegram bot launch failed; will retry"
+      );
+
+      // If another poller is active, wait longer than the polling timeout to
+      // allow the other getUpdates request to finish.
+      await sleep(delayMs);
+    }
+  }
+}
+
 async function main() {
   const config = loadConfig();
   const logger = createLogger(config.logLevel);
@@ -31,10 +69,6 @@ async function main() {
   // Start monitor
   monitor.start();
 
-  // Start bot (non-blocking)
-  bot.launch();
-  logger.info("Telegram bot launched");
-
   // Koyeb Free only supports Web services; expose a tiny health endpoint so the
   // platform can probe liveness and you can keep it awake via external pings.
   const port = Number(process.env.PORT || 8000);
@@ -54,6 +88,9 @@ async function main() {
   server.listen(port, () => {
     logger.info({ port }, "Health server listening");
   });
+
+  // Start bot in background with retry so transient 409s don't crash the agent.
+  void launchBotWithRetry(bot, logger);
 
   // Graceful shutdown
   const shutdown = () => {
