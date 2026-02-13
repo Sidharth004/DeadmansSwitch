@@ -16,6 +16,13 @@ After deploy:
 
 Preferred hackathon path: deploy `agent/` as a Koyeb service without card details.
 
+### Free plan notes (important)
+
+- Koyeb Free may not support `Worker` services and can scale to zero when idle.
+- For a Telegram bot, this can look like "no response" if the service is asleep.
+- Workaround: deploy as a `Web service` and keep it awake with periodic HTTP pings to `/health`
+  (use a simple uptime monitor).
+
 ### Option A: Dockerfile deploy (recommended)
 
 1. Push branch containing `agent/Dockerfile`
@@ -36,6 +43,9 @@ Preferred hackathon path: deploy `agent/` as a Koyeb service without card detail
 - monitor polling loop started
 - activity checker loop started
 - telegram bot launch without auth errors
+
+Health endpoint:
+- `GET /health` -> `200 ok`
 
 ### Option B: Build/Run commands (no Dockerfile)
 

@@ -5,6 +5,7 @@ import { createVaultStore } from "./database";
 import { initEmailTransport } from "./notifications/email";
 import { createBot } from "./bot";
 import { VaultMonitor } from "./monitor";
+import http from "http";
 
 async function main() {
   const config = loadConfig();
@@ -34,9 +35,30 @@ async function main() {
   bot.launch();
   logger.info("Telegram bot launched");
 
+  // Koyeb Free only supports Web services; expose a tiny health endpoint so the
+  // platform can probe liveness and you can keep it awake via external pings.
+  const port = Number(process.env.PORT || 8000);
+  const server = http.createServer((req, res) => {
+    const url = req.url || "/";
+    if (url === "/health" || url === "/") {
+      res.statusCode = 200;
+      res.setHeader("Content-Type", "text/plain; charset=utf-8");
+      res.end("ok");
+      return;
+    }
+    res.statusCode = 404;
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    res.end("not found");
+  });
+
+  server.listen(port, () => {
+    logger.info({ port }, "Health server listening");
+  });
+
   // Graceful shutdown
   const shutdown = () => {
     logger.info("Shutting down...");
+    server.close();
     monitor.stop();
     bot.stop("SIGINT");
     process.exit(0);
