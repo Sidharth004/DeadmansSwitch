@@ -42,6 +42,7 @@ jobs:
           PROGRAM_ID: ${{ secrets.PROGRAM_ID }}
           AGENT_PRIVATE_KEY: ${{ secrets.AGENT_PRIVATE_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_INTENT_SECRET: ${{ secrets.TG_INTENT_SECRET }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           APP_URL: ${{ secrets.APP_URL }}

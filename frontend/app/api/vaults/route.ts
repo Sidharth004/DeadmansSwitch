@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
       challengePeriodDays,
       ownerEmail,
       beneficiaries,
+      telegramChatId,
     }: {
       ownerAddress: string;
       vaultPda: string;
@@ -37,6 +38,7 @@ export async function POST(request: NextRequest) {
       challengePeriodDays: number;
       ownerEmail: string | null;
       beneficiaries: BeneficiaryInput[];
+      telegramChatId?: string | null;
     } = body;
 
     if (!ownerAddress || !vaultPda || !Array.isArray(beneficiaries)) {
@@ -61,6 +63,12 @@ export async function POST(request: NextRequest) {
 
     if (ownerEmail && !EMAIL_REGEX.test(ownerEmail)) {
       return NextResponse.json({ error: "ownerEmail is invalid." }, { status: 400 });
+    }
+
+    if (telegramChatId != null) {
+      if (typeof telegramChatId !== "string" || telegramChatId.length === 0 || telegramChatId.length > 50) {
+        return NextResponse.json({ error: "telegramChatId is invalid." }, { status: 400 });
+      }
     }
 
     const totalShares = beneficiaries.reduce((sum, item) => sum + item.share, 0);
@@ -107,6 +115,7 @@ export async function POST(request: NextRequest) {
           state: "active",
           warning_period_days: warningPeriodDays,
           challenge_period_days: challengePeriodDays,
+          telegram_chat_id: telegramChatId ?? null,
           owner_email: ownerEmail,
           updated_at: new Date().toISOString(),
         },

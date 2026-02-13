@@ -11,6 +11,7 @@ const configSchema = z.object({
 
   // Telegram
   telegramBotToken: z.string().min(1, "TELEGRAM_BOT_TOKEN is required"),
+  tgIntentSecret: z.string().min(16, "TG_INTENT_SECRET is required"),
 
   // Supabase
   supabaseUrl: z.string().url("SUPABASE_URL must be a valid URL"),
@@ -45,6 +46,7 @@ export function loadConfig(): Config {
     programId: process.env.PROGRAM_ID,
     agentPrivateKey: process.env.AGENT_PRIVATE_KEY,
     telegramBotToken: process.env.TELEGRAM_BOT_TOKEN,
+    tgIntentSecret: process.env.TG_INTENT_SECRET,
     supabaseUrl: process.env.SUPABASE_URL,
     supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
     emailHost: process.env.EMAIL_HOST || undefined,

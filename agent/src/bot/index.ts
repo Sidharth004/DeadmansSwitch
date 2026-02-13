@@ -7,6 +7,8 @@ import { setupStartCommand } from "./commands/start";
 import { setupHelpCommand } from "./commands/help";
 import { setupStatusCommand } from "./commands/status";
 import { setupCheckinCommand } from "./commands/checkin";
+import { setupCreateCommand } from "./commands/create";
+import { setupClaimCommand } from "./commands/claim";
 import { createCommandRateLimitMiddleware } from "./rate-limit";
 
 export function createBot(
@@ -30,7 +32,9 @@ export function createBot(
   setupStartCommand(bot, store, solana, logger);
   setupHelpCommand(bot);
   setupStatusCommand(bot, store, solana, logger);
-  setupCheckinCommand(bot, config);
+  setupCreateCommand(bot, config, logger);
+  setupCheckinCommand(bot, config, store, logger);
+  setupClaimCommand(bot, config, store, solana, logger);
 
   bot.catch((err: any, ctx: Context) => {
     logger.error({ err, updateType: ctx.updateType }, "Bot error");
