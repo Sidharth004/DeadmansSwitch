@@ -10,6 +10,7 @@ import { setupCheckinCommand } from "./commands/checkin";
 import { setupCreateCommand } from "./commands/create";
 import { setupClaimCommand } from "./commands/claim";
 import { setupBeneficiaryCommand } from "./commands/beneficiary";
+import { setupAboutCommand } from "./commands/about";
 import { createCommandRateLimitMiddleware } from "./rate-limit";
 
 export function createBot(
@@ -32,6 +33,7 @@ export function createBot(
 
   setupStartCommand(bot, store, solana, logger);
   setupHelpCommand(bot);
+  setupAboutCommand(bot);
   setupStatusCommand(bot, store, solana, logger);
   setupCreateCommand(bot, config, logger);
   setupCheckinCommand(bot, config, store, logger);

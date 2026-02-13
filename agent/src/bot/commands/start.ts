@@ -17,15 +17,20 @@ export function setupStartCommand(
     if (args.length === 0) {
       await ctx.reply(
         [
-          "👋 Welcome to Dead Man's Switch Bot!",
+          "👋 *Welcome to Dead Man's Switch*",
           "",
-          "Link your vault with:",
-          "`/start <owner_pubkey>`",
+          "This bot helps you run a non-custodial inheritance vault on Solana.",
+          "You sign transactions in your wallet using secure links.",
           "",
-          "Commands:",
-          "/help — Show all commands",
-          "/status — Vault status & countdown",
-          "/checkin — Check-in link",
+          "*Get started*",
+          "- Learn what this is: `/about`",
+          "- Create a vault (sign via link): `/create ...`",
+          "- Link an existing vault: `/start <owner_pubkey>`",
+          "",
+          "*Common commands*",
+          "- `/help` command list",
+          "- `/status` vault state and countdown",
+          "- `/checkin` owner check-in link",
         ].join("\n"),
         { parse_mode: "Markdown" }
       );
