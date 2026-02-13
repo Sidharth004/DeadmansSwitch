@@ -100,6 +100,7 @@ node -e "const fs=require('fs');const bs58=require('bs58');const k=JSON.parse(fs
 - `NEXT_PUBLIC_BOT_USERNAME`
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
+- `TG_INTENT_SECRET`
 
 3. Build command:
 
