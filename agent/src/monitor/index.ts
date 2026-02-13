@@ -75,33 +75,40 @@ export class VaultMonitor {
 
   private async checkSingleVault(ownerAddress: string): Promise<void> {
     const ownerPubkey = new PublicKey(ownerAddress);
-    const vaultData = await fetchVaultState(this.solana.program, ownerPubkey);
+    const vaultRecord = await this.store.getVaultByOwner(ownerAddress);
+    let dbState = vaultRecord?.state;
+    let vaultData = await fetchVaultState(this.solana.program, ownerPubkey);
 
     if (!vaultData) {
       this.logger.warn({ owner: ownerAddress }, "Vault not found on chain");
       return;
     }
 
-    const nowUnix = Math.floor(Date.now() / 1000);
-    const evaluation = evaluateVaultState(vaultData, nowUnix);
+    // In most cases, a vault advances at most one step per poll interval.
+    // For "fast demo" configurations (e.g. 0-day periods) multiple deadlines
+    // can already be elapsed; loop with a small cap to converge in one pass.
+    for (let steps = 0; steps < 3; steps++) {
+      const nowUnix = Math.floor(Date.now() / 1000);
+      const evaluation = evaluateVaultState(vaultData, nowUnix);
 
-    this.logger.debug(
-      {
-        owner: ownerAddress,
-        state: evaluation.currentState,
-        canAdvance: evaluation.canAdvance,
-        secondsUntil: evaluation.secondsUntilAdvance,
-      },
-      "Vault evaluation"
-    );
+      this.logger.debug(
+        {
+          owner: ownerAddress,
+          state: evaluation.currentState,
+          canAdvance: evaluation.canAdvance,
+          secondsUntil: evaluation.secondsUntilAdvance,
+        },
+        "Vault evaluation"
+      );
 
-    // Update DB state if it changed
-    const vaultRecord = await this.store.getVaultByOwner(ownerAddress);
-    if (vaultRecord && vaultRecord.state !== vaultData.state) {
-      await this.store.updateVaultState(ownerAddress, vaultData.state);
-    }
+      // Update DB state if it changed
+      if (vaultRecord && dbState !== vaultData.state) {
+        await this.store.updateVaultState(ownerAddress, vaultData.state);
+        dbState = vaultData.state;
+      }
 
-    if (evaluation.canAdvance) {
+      if (!evaluation.canAdvance) break;
+
       this.logger.info(
         {
           owner: ownerAddress,
@@ -113,12 +120,7 @@ export class VaultMonitor {
 
       try {
         await withRetry(
-          () =>
-            sendAdvanceState(
-              this.solana.program,
-              ownerPubkey,
-              this.logger
-            ),
+          () => sendAdvanceState(this.solana.program, ownerPubkey, this.logger),
           {
             attempts: this.config.advanceStateRetryAttempts,
             baseDelayMs: this.config.advanceStateRetryBaseDelayMs,
@@ -137,7 +139,9 @@ export class VaultMonitor {
             logger: this.logger,
           }
         );
-        if (updated && vaultRecord) {
+        if (!updated) break;
+
+        if (vaultRecord) {
           const beneficiaries = await this.store.getBeneficiariesByVaultId(
             vaultRecord.id
           );
@@ -151,11 +155,14 @@ export class VaultMonitor {
             this.logger
           );
         }
+
+        vaultData = updated;
       } catch (err) {
         this.logger.error(
           { err, owner: ownerAddress },
           "Failed to advance vault state"
         );
+        break;
       }
     }
   }
