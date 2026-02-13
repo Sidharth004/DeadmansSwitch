@@ -107,6 +107,11 @@ async function main() {
   const logger = createLogger(config.logLevel);
   const connection = new Connection(config.solanaRpcUrl, "confirmed");
 
+  const skipClaim =
+    process.env.E2E_SKIP_CLAIM === "1" ||
+    process.env.E2E_SKIP_CLAIM === "true" ||
+    process.env.E2E_SKIP_CLAIM === "yes";
+
   const owner = Keypair.generate();
   const beneficiary = Keypair.generate();
   const fallbackPayer = loadDefaultPayerKeypair();
@@ -215,6 +220,18 @@ async function main() {
     logger.info("Vault reached claimable state");
   } finally {
     monitor.stop();
+  }
+
+  if (skipClaim) {
+    logger.info(
+      {
+        owner: owner.publicKey.toBase58(),
+        beneficiary: beneficiary.publicKey.toBase58(),
+        vault: vaultPda.toBase58(),
+      },
+      "E2E_SKIP_CLAIM enabled; leaving vault claimable for manual beneficiary claim"
+    );
+    return;
   }
 
   const beneficiaryProvider = new AnchorProvider(

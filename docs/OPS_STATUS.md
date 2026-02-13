@@ -104,7 +104,50 @@ Remote migration push (CLI):
    - wait for claimable (or use short timers / devnet E2E for state transitions)
    - beneficiary uses `/claim` link and signs
 
+## Telegram End-to-End Testing Runbook (Owner + Beneficiary)
+
+This runbook tests the full UX from both angles.
+
+Prereqs:
+- Use **two Telegram accounts** (recommended): one as **Owner**, one as **Beneficiary**.
+- Ensure only **one** agent instance is running with your `TELEGRAM_BOT_TOKEN` (Koyeb OR local).
+
+### A) Fast devnet simulation: stop at CLAIMABLE (manual claim via Telegram link)
+
+This is the easiest way to demo the beneficiary claim flow without waiting days.
+
+1. Run locally:
+   - `cd agent`
+   - `npm run e2e:devnet:claimable`
+2. Desired outcome:
+   - Script prints `owner`, `beneficiary`, `vault` and logs `Vault reached claimable state`
+   - It then stops with message: `E2E_SKIP_CLAIM enabled; leaving vault claimable ...`
+3. From Telegram:
+   - Owner account: `/start <owner_pubkey>` (use the owner pubkey printed by the script)
+     - Desired outcome: bot confirms the vault is linked.
+   - Beneficiary account: `/beneficiary <owner_pubkey> <beneficiary_pubkey>`
+     - Desired outcome: bot confirms beneficiary chat is linked for alerts.
+   - Beneficiary account: `/claim <owner_pubkey>`
+     - Desired outcome: bot returns a claim signing link; open it, connect the beneficiary wallet, sign; vault becomes `claimed`.
+
+Notes:
+- If you already have the vault in DB but bot says not found on-chain, you’re likely mixing cluster/program IDs (devnet vs mainnet).
+
+### B) Fully Telegram-driven creation on devnet (non-custodial)
+
+1. Owner account: `/create <owner_pubkey> <warning_days> <challenge_days> <deposit_sol> <beneficiary_pubkey:share>`
+2. Desired outcome:
+   - Bot replies with a `/tg/create` signing link.
+   - Owner opens link, connects wallet, signs initialize+deposit.
+3. Owner account: `/start <owner_pubkey>`
+4. Beneficiary account: `/beneficiary <owner_pubkey> <beneficiary_pubkey>`
+5. Owner account: do nothing (or wait for short timers on devnet setups)
+6. Desired outcome:
+   - When vault reaches `claimable`, beneficiary receives an alert (Telegram if linked; email if configured).
+   - Beneficiary runs `/claim <owner_pubkey>` and signs to receive funds.
+
 ## Known Warnings / Noise
 
 - Frontend builds can warn about a dependency chain resolving `pino-pretty` (WalletConnect import chain). Build still succeeds.
 - Devnet airdrops are sometimes rate-limited or return internal errors; E2E script falls back to funding from local CLI payer.
+- If `https://api.devnet.solana.com` is unreachable (DNS/network), set `SOLANA_RPC_URL` to an alternate devnet RPC before running E2E.
