@@ -175,7 +175,7 @@ async function main() {
   logger.info({ vaultPda: vaultPda.toBase58() }, "Vault initialized and funded");
 
   const store = createVaultStore(config, logger);
-  await store.upsertVault({
+  const vaultRecord = await store.upsertVault({
     owner_address: owner.publicKey.toBase58(),
     vault_pda: vaultPda.toBase58(),
     state: "active",
@@ -186,7 +186,19 @@ async function main() {
     last_activity_reminder_at: null,
   });
 
-  logger.info("Vault inserted into tracking store");
+  // Ensure beneficiaries exist in the DB so claimable notifications can fan out.
+  await store.upsertBeneficiaries([
+    {
+      vault_id: vaultRecord.id,
+      address: beneficiary.publicKey.toBase58(),
+      share: 100,
+      email: process.env.E2E_BENEFICIARY_EMAIL || null,
+      telegram_chat_id: null,
+      has_claimed: false,
+    },
+  ]);
+
+  logger.info("Vault + beneficiaries inserted into tracking store");
 
   const solana = initSolana(config, logger);
   const bot = new Telegraf(config.telegramBotToken);
