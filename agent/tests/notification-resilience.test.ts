@@ -58,6 +58,7 @@ describe("notifyStateTransition resilience", () => {
       notifyStateTransition(
         "warning",
         makeVault(),
+        [],
         {} as any,
         makeConfig(),
         makeLogger()
@@ -76,6 +77,7 @@ describe("notifyStateTransition resilience", () => {
       notifyStateTransition(
         "warning",
         makeVault(),
+        [],
         {} as any,
         makeConfig(),
         makeLogger()

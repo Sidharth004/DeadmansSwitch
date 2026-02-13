@@ -11,7 +11,7 @@ export type TgIntent =
       warningDays: number;
       challengeDays: number;
       depositSol: string;
-      beneficiaries: { address: string; share: number }[];
+      beneficiaries: { address: string; share: number; email?: string }[];
     }
   | {
       v: 1;
@@ -64,4 +64,3 @@ export function verifyTgIntent(payloadB64Url: string, sigB64Url: string): TgInte
 
   return parsed;
 }
-

@@ -89,7 +89,7 @@ export default function TgCreateClient({ intent }: { intent: Extract<TgIntent, {
           challengePeriodDays: intent.challengeDays,
           ownerEmail: null,
           telegramChatId: intent.chatId,
-          beneficiaries: intent.beneficiaries.map((b) => ({ address: b.address, share: b.share })),
+          beneficiaries: intent.beneficiaries.map((b) => ({ address: b.address, share: b.share, email: b.email })),
         }),
       });
 
@@ -153,4 +153,3 @@ export default function TgCreateClient({ intent }: { intent: Extract<TgIntent, {
     </main>
   );
 }
-

@@ -138,10 +138,14 @@ export class VaultMonitor {
           }
         );
         if (updated && vaultRecord) {
+          const beneficiaries = await this.store.getBeneficiariesByVaultId(
+            vaultRecord.id
+          );
           await this.store.updateVaultState(ownerAddress, updated.state);
           await notifyStateTransition(
             updated.state,
             vaultRecord,
+            beneficiaries,
             this.bot,
             this.config,
             this.logger

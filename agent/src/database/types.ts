@@ -18,6 +18,7 @@ export interface BeneficiaryRecord {
   address: string;
   share: number;
   email: string | null;
+  telegram_chat_id: string | null;
   has_claimed: boolean;
   created_at: string;
 }

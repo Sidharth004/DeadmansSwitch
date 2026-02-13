@@ -8,6 +8,7 @@ import { encodeIntentPayload, signIntentPayload } from "../intent";
 type CreateBeneficiary = {
   address: string;
   share: number;
+  email?: string;
 };
 
 function randomNonce(): string {
@@ -31,7 +32,7 @@ export function setupCreateCommand(
           "🛠 *Create Vault (non-custodial)*",
           "",
           "Usage:",
-          "`/create <owner_pubkey> <warning_days> <challenge_days> <deposit_sol> <beneficiary_pubkey:share> [beneficiary_pubkey:share ...]`",
+          "`/create <owner_pubkey> <warning_days> <challenge_days> <deposit_sol> <beneficiary_pubkey:share[:email]> [beneficiary_pubkey:share[:email] ...]`",
           "",
           "Example:",
           "`/create YourOwnerPubkey 90 15 0.1 BeneficiaryPubkey:100`",
@@ -80,7 +81,7 @@ export function setupCreateCommand(
 
     const beneficiaries: CreateBeneficiary[] = [];
     for (const item of beneficiaryArgs) {
-      const [address, shareRaw] = item.split(":");
+      const [address, shareRaw, emailRaw] = item.split(":");
       const share = Number(shareRaw);
       if (!address || !shareRaw) {
         await ctx.reply(
@@ -98,7 +99,7 @@ export function setupCreateCommand(
         await ctx.reply(`Invalid share for ${address}. Must be 1-100.`);
         return;
       }
-      beneficiaries.push({ address, share });
+      beneficiaries.push({ address, share, email: emailRaw || undefined });
     }
 
     const total = beneficiaries.reduce((sum, b) => sum + b.share, 0);
@@ -111,6 +112,14 @@ export function setupCreateCommand(
     if (new Set(normalized).size !== normalized.length) {
       await ctx.reply("Beneficiary wallet addresses must be unique.");
       return;
+    }
+
+    // Email format validation is enforced on the server as well; keep a lightweight check here.
+    for (const b of beneficiaries) {
+      if (b.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.email)) {
+        await ctx.reply(`Invalid beneficiary email: ${b.email}`);
+        return;
+      }
     }
 
     const chatId = String(ctx.chat.id);

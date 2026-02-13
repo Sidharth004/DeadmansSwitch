@@ -6,8 +6,9 @@ export function setupHelpCommand(bot: Telegraf): void {
       [
         "📖 *Dead Man's Switch Bot Commands*",
         "",
-        "`/create <owner_pubkey> <warning_days> <challenge_days> <deposit_sol> <beneficiary:share> [...]` — Create a vault (sign via link)",
+        "`/create <owner_pubkey> <warning_days> <challenge_days> <deposit_sol> <beneficiary:share[:email]> [...]` — Create a vault (sign via link)",
         "`/start <owner_pubkey>` — Link a vault to this chat",
+        "`/beneficiary <owner_pubkey> <beneficiary_pubkey> [email]` — Link beneficiary chat for claim alerts",
         "`/status` — Show vault state & countdown",
         "`/checkin` — Get owner check-in signing link",
         "`/claim [owner_pubkey]` — Get beneficiary claim signing link",
