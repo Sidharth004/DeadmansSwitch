@@ -40,6 +40,7 @@ export function setupCreateCommand(
           "Notes:",
           "- Beneficiaries: 1-5",
           "- Shares must total 100",
+          "- Set `warning_days` or `challenge_days` to `0` for a fast demo (immediate advancement on next agent poll)",
           "- You will be sent a link to sign in your wallet",
         ].join("\n"),
         { parse_mode: "Markdown" }
@@ -61,12 +62,13 @@ export function setupCreateCommand(
     const challengeDays = Number(challengeDaysRaw);
     const depositSol = Number(depositSolRaw);
 
-    if (!Number.isInteger(warningDays) || warningDays < 1) {
-      await ctx.reply("warning_days must be a positive integer.");
+    // Allow 0 for hackathon demos/testing (immediate escalation on next agent poll).
+    if (!Number.isInteger(warningDays) || warningDays < 0) {
+      await ctx.reply("warning_days must be an integer >= 0.");
       return;
     }
-    if (!Number.isInteger(challengeDays) || challengeDays < 1) {
-      await ctx.reply("challenge_days must be a positive integer.");
+    if (!Number.isInteger(challengeDays) || challengeDays < 0) {
+      await ctx.reply("challenge_days must be an integer >= 0.");
       return;
     }
     if (!Number.isFinite(depositSol) || depositSol < 0) {

@@ -136,6 +136,7 @@ Notes:
 ### B) Fully Telegram-driven creation on devnet (non-custodial)
 
 1. Owner account: `/create <owner_pubkey> <warning_days> <challenge_days> <deposit_sol> <beneficiary_pubkey:share>`
+   - Tip: you can use `0 0` for fast testing (it will advance on the next agent poll).
 2. Desired outcome:
    - Bot replies with a `/tg/create` signing link.
    - Owner opens link, connects wallet, signs initialize+deposit.
