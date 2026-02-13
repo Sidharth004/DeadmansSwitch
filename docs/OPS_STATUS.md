@@ -68,6 +68,9 @@ Koyeb Free web services may scale down to zero. This can cause intermittent Tele
 
 Mitigation:
 - Use an external uptime ping to hit `/health` every 2 to 5 minutes.
+- GitHub Actions keepalive workflow is available:
+  - `.github/workflows/koyeb-keepalive.yml`
+  - Requires repo secret: `KOYEB_HEALTH_URL` (full URL to `/health`)
 
 ## Supabase Migrations
 
@@ -94,4 +97,3 @@ Remote migration push (CLI):
 
 - Frontend builds can warn about a dependency chain resolving `pino-pretty` (WalletConnect import chain). Build still succeeds.
 - Devnet airdrops are sometimes rate-limited or return internal errors; E2E script falls back to funding from local CLI payer.
-
