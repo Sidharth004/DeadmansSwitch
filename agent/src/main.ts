@@ -6,6 +6,11 @@ import { initEmailTransport } from "./notifications/email";
 import { createBot } from "./bot";
 import { VaultMonitor } from "./monitor";
 import http from "http";
+import crypto from "crypto";
+
+function sha256Hex(input: string): string {
+  return crypto.createHash("sha256").update(input, "utf8").digest("hex");
+}
 
 async function sleep(ms: number): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, ms));
@@ -78,6 +83,34 @@ async function main() {
       res.statusCode = 200;
       res.setHeader("Content-Type", "text/plain; charset=utf-8");
       res.end("ok");
+      return;
+    }
+    // Safe diagnostics: no secrets are returned, only hashes/presence signals.
+    // This lets us confirm env mismatches between Koyeb and Vercel quickly.
+    if (url === "/healthz") {
+      const tgSecret = process.env.TG_INTENT_SECRET;
+      res.statusCode = 200;
+      res.setHeader("Content-Type", "application/json; charset=utf-8");
+      res.end(
+        JSON.stringify(
+          {
+            ok: true,
+            now: new Date().toISOString(),
+            programId: config.programId,
+            solanaRpcUrlHost: (() => {
+              try {
+                return new URL(config.solanaRpcUrl).host;
+              } catch {
+                return null;
+              }
+            })(),
+            appUrl: config.appUrl,
+            tgIntentSecretSha256: tgSecret ? sha256Hex(tgSecret) : null,
+          },
+          null,
+          2
+        )
+      );
       return;
     }
     res.statusCode = 404;
